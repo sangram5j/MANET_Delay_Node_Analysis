@@ -1,0 +1,126 @@
+function [SArr, NextCarr] =   BaseAdd(A, B, CarrVal, BaseVal)
+ROW_IND = 1; COL_IND = 2;
+SArr = zeros(size(A, ROW_IND), 1);
+NextCarr = CarrVal;
+if BaseVal >= 1
+    if size(A) == size(B)
+        for iLoop = 1:size(A, ROW_IND)
+            SArr(iLoop) = mod(A(iLoop) +  B(iLoop) + NextCarr, BaseVal);
+            NextCarr = floor(A(iLoop) +  B(iLoop) + NextCarr, BaseVal);
+        end    
+    else        
+        error('Numeric Addition : Dimension Error');
+    end    
+else
+    error('Numeric Addition : Base is invalid');
+end
+end
+
+function [PoisVal] = PoisProb(theta, xVal)
+    eConst = 2.7132;
+    PoisVal = pow(theta, xVal) * pow(eConst, -theta) / factorial(xVal);
+end
+
+function [XArr] = CopyXSols(SolArr, LocInd_Arr, LocCount, No_unk)
+    XArr = zeros(No_unk, 1)';
+    f
+end
+
+function [X] = NodeDelay(A, Y, EpVal)
+%Find all the X[] Matix solutions for AX=Y
+%-->Get all the 
+
+TotSols = 0;
+exitflag = 1;
+
+ROW_IND = 1; COL_IND = 2;
+A_Tmp = A; Y_Tmp = Y; Tmp_IndArr = 1:size(A, ROW_IND);
+No_unk = size(A, COL_IND);
+
+%Sort the Matix A row wise for Maximal Solutions into A_Tmp
+for iLoop = 1:size(A, ROW_IND)
+    for jLoop = iLoop + 1:size(A, ROW_IND)
+      if sum(A(iLoop, :)) <  sum(A(jLoop, :))
+          TmpArr = A_Tmp(iLoop, :);
+          A_Tmp(iLoop, :) = A_Tmp(jLoop, :);
+          A_Tmp(jLoop, :) = TmpArr;
+          
+          Tmp = Tmp_IndArr(iLoop);
+          Tmp_IndArr(iLoop) = Tmp_IndArr(jLoop);
+          Tmp_IndArr(jLoop) = Tmp;
+          
+          Tmp = Y_Tmp(iLoop);
+          Y_Tmp(iLoop) = Y_Tmp(jLoop);
+          Y_Tmp(jLoop) = Tmp;
+      end
+    end  
+end
+
+%Find all the integer sotions for X using the Base addtion technique
+shiftVal = 1;
+TotSols = 1;
+if No_unk > size(A, ROW_IND)
+    for iLoop = 1:size(A, ROW_IND)    
+        LocInd_Arr = find(A_Tmp(iLoop,:) == 1);
+        LocCount = size(LocInd_Arr, COL_IND);
+        SolArr = zeros(1, LocCount);
+        
+        if LocCount - 3 > 0 
+            shiftVal = (LocCount - 3);
+        else
+            shiftVal = 1;
+        end
+        
+        %Set the SolArr size to a Maximum as possible
+        TmpArr = 1:(Y_Tmp(iLoop)+ 1);
+        Fin_SolArr = zeros(LocCount, sum(TmpArr) * shiftVal);
+        
+        for jLoop = Y_Tmp(iLoop)+ 1:1
+            for kLoop = jLoop:1
+               if (sum(SolArr) ==  Y_Tmp(iLoop))
+                    Fin_SolArr(TotSols, :) = CopyXSols(SolArr, LocInd_Arr, LocCount, );
+                    %ValidateNUpdate(Fin_SolArr(TotSols, :), TotSols);
+                    TotSols = TotSols + 1;
+               end
+               BArr = zeros(1, LocCount);
+               BArr(shiftVal) =  jLoop;
+               [SolArr, CarrVal] = BaseAdd(SolArr, BArr, 0);               
+            end
+        end    
+    end
+    
+%else
+end
+
+
+%Calculate the expectance value
+ExpVal =  zeros(TotSols, 1);
+ProbArr = zeros(TotSols, 1);
+thetaArr = ones(TotSols, 1);
+EpArr = ones(TotSols, 1) * EpVal;
+while (exitflag)
+    
+    for iLoop = 1 : TotSols
+        for jLoop = 1 : No_unk
+            ProbArr(iLoop) = ProbArr(iLoop) * PoisProb(thetaArr(jLoop), Fin_SolArr(iLoop, jLoop));
+        end    
+    end
+
+    for iLoop = 1 : TotSols
+        ExpVal = ExpVal + Fin_SolArr(iLoop, :)' * ProbArr(iLoop);
+    end
+    %M step: ?istr+1 ? argmaxQ(?, ?i)
+    for iCurr = 1:TotSols
+        ExpVal(iCurr) = max(ExpVal(iCurr), thetaArr(iCurr));
+    end
+    %Taking the consecutive iteration diffrences and comparin to Ep Arr for
+    %exit condition.
+    TmpArr = find((thetaArr - ExpVal) <= EpArr);
+    if(size(TmpArr, ROW_IND) ==  size(EpArr, ROW_IND))
+        exitflag = 0;
+    end
+end
+
+X = ExpVal;
+
+end
