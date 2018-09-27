@@ -1,4 +1,4 @@
-
+#Project perfromed as a Analysis to Manet research
 
 function [X] = NodeDelay(A, Y, EpVal)
 %Find all the X[] Matix solutions for AX=Y
